@@ -1,0 +1,11 @@
+services:
+  web:
+    build:
+      secrets:
+        - proxy_ca
+    volumes:
+      - /workspace/customer_report:/workspace/customer_report:ro
+      - /workspace/artifacts/void-analysis:/workspace/artifacts/void-analysis:ro
+secrets:
+  proxy_ca:
+    file: /etc/ssl/certs/ca-certificates.crt
