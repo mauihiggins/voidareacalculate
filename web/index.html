@@ -15,6 +15,7 @@
 <label>추가할 패드의 LED번호 <input id="ledName" value="LED1" maxlength="40"></label>
 <p>사진에서 패드 둘레를 순서대로 클릭 → 패드 확정. 큰 패드와 작은 패드를 모두 등록하세요. 다른 LED는 번호를 바꿔 지정합니다.</p>
 <button id="finishPad" class="button secondary">패드 확정</button><button id="undoPoint" class="button ghost">마지막 점 취소</button>
+<button id="autoPads" class="button secondary">기존 방식으로 4패드 자동 찾기</button><p>중앙 2×2 배치 전용입니다. 자동 경계가 실제 패드와 맞는지 확인하고 각 패드의 LED 번호를 입력하세요. 맞지 않는 패드는 삭제 후 수동 등록하세요.</p>
 <div id="registeredPads"></div>
 <button id="saveTemplate" class="button primary">설정 저장 후 보이드 분석</button><button id="cancelRegistration" class="button ghost">등록 취소</button>
 </div></section><div class="overview"><div><span class="metric-icon">▧</span><span>전체 이미지<strong id="total">—</strong></span></div><div><span class="metric-icon green">✓</span><span>분석 완료<strong id="completed">—</strong></span></div><div><span class="metric-icon">◷</span><span>진행 중<strong id="pending">—</strong></span></div><div class="profile"><small>ANALYSIS PROFILE</small><strong>등록 패드 · 동박 음영 보정</strong><span>최초 등록 후 반복 검사</span></div></div>

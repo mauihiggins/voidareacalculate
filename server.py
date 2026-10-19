@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image, ImageOps, UnidentifiedImageError
 from pydantic import BaseModel, Field
 
-from auto_analysis import measure, render_result
+from auto_analysis import measure, render_result, suggest_pads
 from template_analysis import analyze_template, validate_pads, led_results
 
 ROOT=Path(__file__).parent
@@ -341,6 +341,17 @@ class TemplateRequest(BaseModel):
     name:str=Field(min_length=1,max_length=120)
     job_id:str
     pads:list[TemplatePad]=Field(min_length=1,max_length=64)
+
+@app.post('/api/jobs/{key}/suggest-pads')
+def suggest_job_pads(key: str):
+    job = get_job(key)
+    with Image.open(job['_image_path']) as image:
+        try:
+            pads = suggest_pads(image)
+            validate_pads([dict(p, led='unassigned') for p in pads], *image.size)
+        except ValueError as e:
+            raise HTTPException(400, str(e))
+    return {'pads': pads}
 
 @app.get('/api/templates')
 def templates():

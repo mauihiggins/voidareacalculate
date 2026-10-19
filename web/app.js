@@ -135,12 +135,26 @@ async function loadTemplates(selected){
 }
 function showRegistered(){
  const list=$('registeredPads');list.replaceChildren();
- registration.pads.forEach((pad,i)=>{const row=text('div',`${pad.id} · ${pad.led} `);const remove=text('button','삭제','button ghost');remove.onclick=()=>{registration.pads.splice(i,1);registration.pads.forEach((p,j)=>p.id=`P${j+1}`);showRegistered();draw();};row.append(remove);list.append(row);});
+ registration.pads.forEach((pad,i)=>{const row=text('div',`${pad.id} · `);const ledInput=document.createElement('input');ledInput.placeholder='LED 번호 입력';ledInput.value=pad.led;ledInput.maxLength=40;ledInput.setAttribute('aria-label',`${pad.id} LED 번호`);ledInput.oninput=()=>{pad.led=ledInput.value.trim();draw();};row.append(ledInput);const remove=text('button','삭제','button ghost');remove.onclick=()=>{registration.pads.splice(i,1);registration.pads.forEach((p,j)=>p.id=`P${j+1}`);showRegistered();draw();};row.append(remove);list.append(row);});
 }
 $('registerPads').onclick=()=>{
  if(!state.image){toast('기준으로 사용할 사진을 먼저 올리세요.');return;}
  if(state.editing){toast('보이드 수정을 저장하거나 취소한 뒤 등록하세요.');return;}
  registration={pads:[],points:[]};state.result=null;renderCards();$('registration').hidden=false;setView('result');$('busy').hidden=true;$('download').disabled=true;$('editToggle').disabled=true;$('reanalyze').disabled=true;showRegistered();draw();setStatus('패드 둘레를 차례로 클릭한 뒤 패드 확정을 누르세요.');
+};
+$('autoPads').onclick=async()=>{
+ if(!registration)return;
+ if(registration.pads.length||registration.points.length){toast('기존 등록 내용을 유지합니다. 자동 찾기는 패드와 작성 중인 점이 없는 상태에서 시작하세요.');return;}
+ const current=registration,job=state.selected;
+ $('autoPads').disabled=true;setStatus('패드 안팎의 밝기 차이로 4개 경계를 찾고 있습니다…');
+ try{
+  const result=await api(`/api/jobs/${job}/suggest-pads`,{method:'POST'});
+  if(registration!==current||state.selected!==job)return;
+  if(current.pads.length||current.points.length){toast('작성 중인 내용이 있어 자동 경계를 적용하지 않았습니다.');return;}
+  current.pads=result.pads.map(p=>({id:p.id,led:'',polygon:p.polygon}));
+  showRegistered();draw();setStatus('자동 경계 4개를 찾았습니다. 실제 패드와 경계를 비교하고 각 LED 번호를 입력한 뒤 저장하세요.');
+ }catch(e){if(registration===current){setStatus(e.message,true);toast(e.message);}}
+ finally{$('autoPads').disabled=false;}
 };
 $('finishPad').onclick=()=>{
  if(!registration)return;const led=$('ledName').value.trim();
@@ -152,6 +166,7 @@ $('cancelRegistration').onclick=()=>select(state.selected);
 $('saveTemplate').onclick=async()=>{
  if(!registration)return;if(registration.points.length){toast('작성 중인 패드를 먼저 확정하세요.');return;}
  const name=$('templateName').value.trim();if(!name||!registration.pads.length){toast('설정 이름과 패드를 입력하세요.');return;}
+ if(registration.pads.some(p=>!p.led.trim())){toast('각 패드의 LED 번호를 입력하세요.');return;}
  $('saveTemplate').disabled=true;
  try{const template=await api('/api/templates',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,job_id:state.selected,pads:registration.pads})});await loadTemplates(template.id);registration=null;$('registration').hidden=true;await $('reanalyze').onclick();}
  catch(e){toast(e.message);}finally{$('saveTemplate').disabled=false;}

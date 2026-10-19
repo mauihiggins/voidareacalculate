@@ -152,6 +152,21 @@ def measure(polygon, voids, width, height):
     return {'pad_area':area,'void_area':void_area,'ratio':100*void_area/area,'count':len(voids)}
 
 
+def suggest_pads(image):
+    """Suggest the legacy central 2x2 layout, without calculating voids."""
+    width, height = image.size
+    if min(width, height) < 300 or not .65 <= width / height <= 1.5:
+        raise ValueError('중앙에 2×2로 배치된 4패드 촬영 구도의 300px 이상 사진을 사용하세요.')
+    scale = 1032 / width
+    gray = np.asarray(image.convert('L').resize((1032, round(height * scale)), Image.Resampling.LANCZOS), dtype=float)
+    if float(np.std(gray)) < 2:
+        raise ValueError('영상 대비가 부족하여 패드 경계를 찾을 수 없습니다.')
+    pads = find_pads(gray)
+    for pad in pads:
+        pad['polygon'] = (np.asarray(pad['polygon']) / scale).round(3).tolist()
+    return pads
+
+
 def analyze_auto(image, sensitivity=1.0):
     if not .5<=sensitivity<=2:
         raise ValueError('민감도는 0.5~2 범위여야 합니다.')
